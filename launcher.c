@@ -16,20 +16,31 @@ typedef struct {
 
 void log_prog(ProgInfo prog_info) {
 	printf("name: %s, args: ", prog_info.file);
-	char* curr_arg = args;
-	while (curr_arg != NULL) {
-		printf("%s ", curr_arg);
-		curr_arg = curr_arg + 1;
+	char** curr_arg = prog_info.args;
+	while (*curr_arg != NULL) {
+		printf("%s ", *curr_arg);
+		++curr_arg;
 	}
 	printf("\n");
 }
 
 char** parse_args(char* arg_line) {
+	if (arg_line == NULL) {
+		return NULL; // program has no args
+	}
+
 	char** args = (char**) malloc(sizeof(char*) * MAX_ARGS);
+	char* token = strtok(arg_line, " ");
+	if (token == NULL) {
+		args[0] = arg_line;
+		args[1] = NULL;
+		return args; // program has one arg
+	}
+
 	int arg_count = 0;
-	char* token;
-	while ((token = strtok(arg_line, ' ') != NULL)) {
+	while (token != NULL) {
 		args[arg_count] = token;
+		token = strtok(NULL, " ");
 		++arg_count;
 	}
 	args[arg_count] = NULL;
@@ -39,6 +50,12 @@ char** parse_args(char* arg_line) {
 ProgInfo parse_prog(char* line) {
 	line[strlen(line) - 1] = '\0'; // Remove '\n'
 	char* ptr = strchr(line, ' ');
+	if (ptr == NULL) {
+		ProgInfo *prog_info = malloc(sizeof(ProgInfo));
+		prog_info -> file = strdup(line);
+		prog_info -> args = NULL;
+		return *prog_info;
+	}
 
 	// Split string by space
 	long int pos = ptr - line;
@@ -52,7 +69,7 @@ ProgInfo parse_prog(char* line) {
 }
 
 int main(int argc, char** argv) {
-	ProgInfo *progs = (ProgInfo*)malloc(sizeof(ProgInfo) * MAX_PROGS);
+	ProgInfo progs[MAX_PROGS];
 
 	int exec_count = 0;
 	char* line = NULL;
@@ -63,10 +80,9 @@ int main(int argc, char** argv) {
 		++exec_count;
 	}
 
-	int curr_prog = 0;
-	while (progs[curr_prog] != NULL) {
-		log_prog(progs[curr_prog]);
-		++curr_prog;
+	for (int i = 0; i < exec_count; ++i) {
+		log_prog(progs[i]);
 	}
+
 	return 0;
 }
