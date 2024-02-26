@@ -72,7 +72,11 @@ static ssize_t proc_read(struct file *file, char __user *usr_buf, size_t count, 
         }
 
         tsk = pid_task(find_vpid(l_pid), PIDTYPE_PID);
+	if (tsk == NULL) {
+		return rv; // Program not found
+	}
 
+	sprintf(buffer, "command = [%s] pid = [%d] state = [%d]", tsk.comm, tsk.pid, tsk.state);
         completed = 1;
 
         // copies the contents of kernel buffer to userspace usr_buf 
