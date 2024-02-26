@@ -57,14 +57,14 @@ ProgInfo parse_prog(char* line) {
 		return *prog_info;
 	}
 
-	// Split string by space
+	// Split name from line
 	long int pos = ptr - line;
-	line[pos] = '\0'; 
-	char* args = ptr + 1;
+	char* name = strdup(line);
+	name[pos] = '\0';
 
 	ProgInfo *prog_info = malloc(sizeof(ProgInfo));
-	prog_info -> file = strdup(line);
-	prog_info -> args = parse_args(args);
+	prog_info -> file = name;
+	prog_info -> args = parse_args(line);
 	return *prog_info;
 }
 
@@ -80,9 +80,36 @@ int main(int argc, char** argv) {
 		++exec_count;
 	}
 
+	pid_t pids[exec_count];
 	for (int i = 0; i < exec_count; ++i) {
-		log_prog(progs[i]);
+		pid_t pid = fork();
+		if (pid == 0) {
+			ProgInfo prog = progs[i];
+			execvp(prog.file, prog.args);
+			exit(1);
+		} else if (pid > 0) {
+			pids[i] = pid;
+			printf("Starting process: %ld\n", pid);
+		} else {
+			perror("Fork failed");
+			exit(1);
+		}
 	}
+
+	char* summary[exec_count];
+	for (int i = 0; i < exec_count; ++i) {
+		int status;
+		char buffer[512];
+		snprintf(buffer, sizeof(buffer), "Child process %d exited with status: %d\n", pids[i], WEXITSTATUS(status)); 
+		summary[i] = buffer;
+	}
+
+	fflush(stdout);
+	printf("============== Process Summary ================\n");
+	for (int i = 0; i < exec_count; ++i) {
+		printf(summary[i]);
+	}
+	printf("===============================================\n");
 
 	return 0;
 }
