@@ -96,15 +96,19 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	return 0;
+
+	// Code to report summary of processes
+
 	char* summary[exec_count];
 	for (int i = 0; i < exec_count; ++i) {
 		int status;
+		waitpid(pids[i], &status, 0);
 		char buffer[512];
 		snprintf(buffer, sizeof(buffer), "Child process %d exited with status: %d\n", pids[i], WEXITSTATUS(status)); 
 		summary[i] = buffer;
 	}
 
-	fflush(stdout);
 	printf("============== Process Summary ================\n");
 	for (int i = 0; i < exec_count; ++i) {
 		printf(summary[i]);
